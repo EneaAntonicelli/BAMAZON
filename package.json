@@ -1,0 +1,24 @@
+{
+  "name": "BAMAZON",
+  "version": "1.0.0",
+  "description": "",
+  "main": "customer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EneaAntonicelli/BAMAZON.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EneaAntonicelli/BAMAZON/issues"
+  },
+  "homepage": "https://github.com/EneaAntonicelli/BAMAZON#readme",
+  "dependencies": {
+    "inquirer": "^6.1.0",
+    "mysql": "^2.16.0"
+  }
+}

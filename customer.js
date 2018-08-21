@@ -2,7 +2,7 @@ const mysql = require("mysql");
 const inquirer = require("inquirer");
 
 const connection = mysql.createConnection ({
-    host: "local host",
+    host: "localhost",
     port: 3306,
     user: "root",
     password: "password",
@@ -37,16 +37,16 @@ function showInventory() {
         for(var i = 0; i < data.length; i++) {
             console.log("\n" +
                         "ID: " +
-                        data.item_id +
+                        data[i].item_id +
                         "\n" +
                         "PRODUCT: " +
-                        data.product_name +
+                        data[i].product_name +
                         "\n" +
                         "DEPARTMENT: " +
-                        data.department_name +
+                        data[i].department_name +
                         "\n" +
-                        "PRICE: " +
-                        data.price +
+                        "PRICE: $" +
+                        data[i].price +
                         "\n"       
         );
     }

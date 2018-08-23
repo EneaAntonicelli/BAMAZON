@@ -8,13 +8,13 @@ const connection = mysql.createConnection ({
     user: "root",
     password: "password",
     database: "bamazon"
-});
+}); // END OF createConnection
 
 connection.connect(function(err){
     console.log ("Connected as ID: " + connection.threadId);
-    // if (err) throw err; TODO This error is not working.
+    if (err) throw err; 
     start();
-})
+}) // END OF CONNECT
 
 function start() {
     inquirer.prompt ([
@@ -23,9 +23,14 @@ function start() {
             type: "confirm",
             message: "Would you like to view our inventory and place an order?"
         }
-    ])
-    .then(answers  =>{
-        showInventory();
+    ]).then(answers  =>{
+        
+        if (answers.confirm == true){
+            showInventory();
+        } else {
+        console.log("Have a nice day then! ");
+        connection.end();
+        }
     });
 } // END OF START FUNCTION
 
@@ -33,100 +38,84 @@ function showInventory() {
     console.log('------------------------------------');
     console.log('\nSearching for database...\n');
     connection.query("SELECT * FROM products", function(err, data) {
-        // if (err) throw err; TODO This error is not working.
+        if (err) throw err;
         console.table(data);
-        /*
-        //this.data = data;
-        for(var i = 0; i < data.length; i++) {
-            // console.log("\n" +
-            //             "ID: " +
-            //             data[i].item_id +
-            //             "\n" +
-            //             "PRODUCT: " +
-            //             data[i].product_name +
-            //             "\n" +
-            //             "DEPARTMENT: " +
-            //             data[i].department_name +
-            //             "\n" +
-            //             "PRICE: $" +
-            //             data[i].price +
-            //             "\n"       
-            // );
-            
-        }
-        */
+
         purchaseProduct();
-    });
-}
+
+    }); // END OF QUERY
+} // END OF showInventory()
 
 function purchaseProduct(){
+
     console.log('------------------------------------');
     inquirer.prompt([
 		{
-			type: 'input',
-			name: 'item_id',
-			message: 'Please enter the product ID for the item you would like to purchase.',
-			validate: validateInput,
-			filter: Number
+        type: 'input',
+        name: 'item_id',
+        message: 'Please enter the product ID for the item you would like to purchase.',
+        validate: validateInput,
+        filter: Number
         },
         {
-			type: 'input',
-			name: 'quantity',
-			message: 'Please specify a quantity for your order',
-			validate: validateInput,
-			filter: Number
+        type: 'input',
+        name: 'quantity',
+        message: 'Please specify a quantity for your order',
+        validate: validateInput,
+        filter: Number
 		}
 	]).then(function(answer) {
         
         connection.query("SELECT * FROM products", function(err, data) {
+
             if (err) throw err;
-
-            var theRow;
-
-            for(var i=0; i<data.length; i++){
+            var theIndexedRow;
+            for (var i=0; i<data.length; i++){
                 if(data[i].item_id == answer.item_id) {
-                    theRow = data[i];
-                }
-            }
+                    theIndexedRow = data[i];
+                } // END OF IF
+            } // END OF FOR
             
-
-            var data = data[0];
             var id = answer.item_id
             var quantity = answer.quantity
             
-            if (quantity <= theRow.stock_quantity) {
+            if (quantity <= theIndexedRow.stock_quantity) {
 
-                console.log("Your total for " + 
-                            "(" + 
-                            quantity + 
-                            ")" + 
-                            " - " + 
-                            theRow.product_name + 
-                            " is: " + 
-                            data.price.toFixed(2) * 
-                            quantity);
+                console.log(
+                    "Your order was placed successfully. Your total for " + 
+                    "(" + 
+                    quantity + 
+                    ")" + 
+                    " - " + 
+                    theIndexedRow.product_name + 
+                    " is: " + 
+                    theIndexedRow.price.toFixed(2) * 
+                    quantity
+                ); // END OF LOG
 
                 connection.query("UPDATE products SET ? WHERE ?", [{
-                    stock_quantity: data.stock_quantity - quantity
+                    stock_quantity: theIndexedRow.stock_quantity - quantity
                 }, 
                 {
                     item_id: id
                 }], 
                 function(err, data) {
                     if (err) throw err;
-                    purchaseProduct();
+                    start();
                 });
 
             } else {
-                console.log("Sorry, insufficient Quanity at this time. All we have is " + 
-                            data.stock_quantity + 
-                            " in our Inventory.");
-
+                console.log(
+                    "Sorry, insufficient Quanity at this time. All we have is " + 
+                    theIndexedRow.stock_quantity + 
+                    " in our Inventory."
+                );
                 purchaseProduct();
-            }
-        })
-    })
-}
+
+            } // END OF ELSE
+        }) // END OF QUERY
+    }) // END OF THEN
+} // END OF purchaseProduct()
 
 
 function validateInput(value) {
@@ -139,4 +128,4 @@ function validateInput(value) {
 	} else {
 		return 'Please enter a whole non-zero number.';
 	}
-}
+} // END OF validateInput()

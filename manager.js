@@ -116,7 +116,7 @@ function updateInventory() {
 
             } else if (data.length > 0) {
                 var updateInventory = parseInt(answers.productQuantity) + data[0].stock_quantity;
-                var id = answer.item_id;
+                var id = answers.item_id;
                 var productName = data[0].product_name;
                 connection.query("UPDATE products SET ? WHERE ?", [{
                     stock_quantity: updateInventory

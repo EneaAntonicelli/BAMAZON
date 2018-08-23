@@ -46,7 +46,7 @@ const managerPrompts = {
     productQuantity: {
         type: "input",
         name:"productQuantity",
-        message: "Please enter the quantity of the product"
+        message: "Please enter the quantity you would like to stock"
     },
 
 } // END OF managerPrompts
@@ -104,7 +104,10 @@ function viewLowInventory() {
 
 function updateInventory() {
     console.log('------------------------------------');
-    inquirer.prompt([managerPrompts.productId, managerPrompts.productQuantity]).then(answers=>{
+    inquirer.prompt([
+        managerPrompts.productId, 
+        managerPrompts.productQuantity
+    ]).then(answers=>{
 
         connection.query(
             "SELECT item_id, product_name, stock_quantity FROM products WHERE ?",
@@ -127,7 +130,7 @@ function updateInventory() {
                 function(err, data) {
                     if (err) throw err;
                     console.log(
-                        "Product " + 
+                        "Product: " + 
                         productName + 
                         "'s stock has been successfully updated to: " +
                         updateInventory +
@@ -139,3 +142,34 @@ function updateInventory() {
         }); // END OF QUERY
     }); // END OF PROMPT
 } // END OF showInventory()
+
+function addNewProduct() {
+    console.log('------------------------------------');
+    console.log('------------------------------------');
+    inquirer.prompt([
+        managerPrompts.productId, 
+        managerPrompts.productName, 
+        managerPrompts.departmentName,
+        managerPrompts.productPrice, 
+        managerPrompts.productQuantity
+    ]).then(answers=>{
+
+    connection.query(
+        "INSERT INTO products SET ?", {
+        product_name: answers.productName,
+        department_name: answers.departmentName, 
+        price: answers.productPrice, 
+        stock_quantity: answers.productQuantity 
+        }, 
+        function(err) {
+            if (err) throw err;
+            console.log("Success!");    
+    start();
+        });
+    }); // END OF QUERY
+} // END OF showInventory()
+
+function exit() {
+    console.log("Goobye! Hope to see you again soon!");
+    connection.end();
+}

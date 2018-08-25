@@ -13,7 +13,7 @@ const connection = mysql.createConnection ({
 connection.connect(function(err){
     console.log ("Connected as ID: " + connection.threadId);
     if (err) throw err; 
-    start();
+    managerStart();
 }) // END OF CONNECT
 
 const managerPrompts = {
@@ -21,38 +21,64 @@ const managerPrompts = {
         type: "list",
         name: "managerSelection",
         message: "What would you like to do? ",
-        choices: ["View Products", "View Low Inventory", "Update Current Inventory", "Add New Product to Inventory", "Exit"]
+        choices:[   "View Products", 
+                    "View Low Inventory", 
+                    "Update Current Inventory Stock", 
+                    "Add New Product to Inventory",
+                    "Delete Product", 
+                    "Exit"
+                ]
     },
     productId: {
         type: "input",
         name: "productId",
-        message: "Please enter the product ID of the item you would like to update"
+        message: "Please enter the product ID of the item you would like to update: ",
+        validate: validateNumber
+    },
+    productDelete: {
+        type: "input",
+        name: "productDelete",
+        message: "Please enter the product ID of the item you would like to delete: ",
+        validate: validateNumber
     },
     productName: {
         type: "input",
         name:"productName",
-        message: "Please enter the product name of the item you would like to update"
+        message: "Please enter the product name of the item you would like to update: ",
+        validate: validateName
     },
     departmentName: {
         type: "input",
         name:"departmentName",
-        message: "Please enter the product's department name"
+        message: "Please enter the product's department name: ",
+        validate: validateName
     },
     productPrice: {
         type: "input",
         name:"productPrice",
-        message: "Please enter the price of the product"
+        message: "Please enter the price of the product: ",
+        validate: validateNumber
     },
     productQuantity: {
         type: "input",
         name:"productQuantity",
-        message: "Please enter the quantity you would like to stock"
+        message: "Please enter the quantity you would like to stock: ",
+        validate: validateNumber
     },
 
 } // END OF managerPrompts
 
+function validateName(name){
+    return name !== '';
+}
+function validateNumber(value){
+    if(isNaN(value) === false && value !=='') {
+        return true;
+    }
+    return false;
+}
 
-function start() {
+function managerStart() {
     console.log('------------------------------------');
     inquirer.prompt(managerPrompts.selectionOptions).then(answers=>{
         switch (answers.managerSelection) {
@@ -64,12 +90,16 @@ function start() {
             viewLowInventory();
             break;
 
-            case "Update Current Inventory":
+            case "Update Current Inventory Stock":
             updateInventory();
             break;
 
             case "Add New Product to Inventory":
             addNewProduct();
+            break;
+
+            case "Delete Product":
+            deleteProduct();
             break;
 
             case "Exit":
@@ -86,7 +116,7 @@ function showInventory() {
     connection.query("SELECT * FROM products", function(err, data) {
         if (err) throw err;
         console.table(data);
-    start();
+    managerStart();
     }); // END OF QUERY
 } // END OF showInventory()
 
@@ -97,7 +127,7 @@ function viewLowInventory() {
     connection.query("SELECT * FROM products HAVING stock_quantity <= 5 ORDER BY item_id", function(err, data) {
         if (err) throw err;
         console.table(data);
-    start();
+    managerStart();
     }); // END OF QUERY
 } // END OF showInventory()
 
@@ -112,6 +142,7 @@ function updateInventory() {
         connection.query(
             "SELECT item_id, product_name, stock_quantity FROM products WHERE ?",
             {item_id: answers.productId}, function(err, data) { 
+            if (err) throw err;
             if (data.length === 0) {
                 console.log("\n404 Product ID not found.\n");
                 
@@ -119,7 +150,7 @@ function updateInventory() {
 
             } else if (data.length > 0) {
                 var updateInventory = parseInt(answers.productQuantity) + data[0].stock_quantity;
-                var id = answers.item_id;
+                var id = answers.productId;
                 var productName = data[0].product_name;
                 connection.query("UPDATE products SET ? WHERE ?", [{
                     stock_quantity: updateInventory
@@ -136,7 +167,7 @@ function updateInventory() {
                         updateInventory +
                         "."       
                     )
-                    start();
+                    managerStart();
                 });
             } // END OF IF ELSE
         }); // END OF QUERY
@@ -147,7 +178,6 @@ function addNewProduct() {
     console.log('------------------------------------');
     console.log('------------------------------------');
     inquirer.prompt([
-        managerPrompts.productId, 
         managerPrompts.productName, 
         managerPrompts.departmentName,
         managerPrompts.productPrice, 
@@ -164,7 +194,7 @@ function addNewProduct() {
         function(err) {
             if (err) throw err;
             console.log("Success!");    
-    start();
+    managerStart();
         });
     }); // END OF QUERY
 } // END OF showInventory()
@@ -172,4 +202,40 @@ function addNewProduct() {
 function exit() {
     console.log("Goobye! Hope to see you again soon!");
     connection.end();
+}
+
+function deleteProduct() {
+    inquirer.prompt(
+        managerPrompts.productDelete
+    ).then((answers) => {
+        connection.query(
+            'SELECT * FROM products WHERE ?', 
+            { item_id: answers.productDelete }, 
+            (err, data) => {
+
+            inquirer.prompt({
+                name: 'confirm',
+                type: 'confirm',
+                message:    
+                    `You would like to delete ` + 
+                    data[0].product_name + 
+                    ` from the database, Is this correct?`
+
+            }).then((answers) => {
+                if (answers.confirm) {
+                    itemToDelete = {
+                        item_id: data[0].item_id
+                    };
+                    connection.query('DELETE FROM products WHERE ?', { item_id: itemToDelete.item_id }, (err, data) => {
+                        if (err) throw err;
+                        console.log('\nItem successfully removed!\n');
+                        managerStart();
+                    });
+                } else {
+                    deleteProduct();
+                }
+            
+            });
+        });
+    });
 }

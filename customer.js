@@ -13,10 +13,10 @@ const connection = mysql.createConnection ({
 connection.connect(function(err){
     console.log ("Connected as ID: " + connection.threadId);
     if (err) throw err; 
-    start();
+    customerStart();
 }) // END OF CONNECT
 
-function start() {
+function customerStart() {
     inquirer.prompt ([
         {
             name: "confirm",
@@ -32,7 +32,7 @@ function start() {
         connection.end();
         }
     });
-} // END OF START FUNCTION
+} // END OF customerStart FUNCTION
 
 function showInventory() {
     console.log('------------------------------------');
@@ -78,6 +78,7 @@ function purchaseProduct(){
             
             var id = answer.item_id
             var quantity = answer.quantity
+            var sales = theIndexedRow.price * quantity
             
             if (quantity <= theIndexedRow.stock_quantity) {
 
@@ -94,14 +95,15 @@ function purchaseProduct(){
                 ); // END OF LOG
 
                 connection.query("UPDATE products SET ? WHERE ?", [{
-                    stock_quantity: theIndexedRow.stock_quantity - quantity
+                    stock_quantity: theIndexedRow.stock_quantity - quantity,
+                    product_sales: theIndexedRow.product_sales + sales
                 }, 
                 {
                     item_id: id
                 }], 
                 function(err, data) {
                     if (err) throw err;
-                    start();
+                    customerStart();
                 });
 
             } else {
